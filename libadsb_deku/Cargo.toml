@@ -11,7 +11,7 @@ keywords = ["deku", "adsb", "aerorust", "airplane", "radar"]
 
 
 [dependencies]
-deku = "0.12"
+deku = { git = "https://github.com/JuanPotato/deku", branch = "master" }
 
 [dev-dependencies]
 hex = "0.4"

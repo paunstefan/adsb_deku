@@ -146,8 +146,8 @@ impl Frame {
     /// Read rest as CRC bits
     fn read_crc<'a, 'b>(
         df: &'a DF,
-        rest: &'b BitSlice<Msb0, u8>,
-    ) -> Result<(&'b BitSlice<Msb0, u8>, u32), DekuError> {
+        rest: &'b BitSlice<u8, Msb0>,
+    ) -> Result<(&'b BitSlice<u8, Msb0>, u32), DekuError> {
         const MODES_LONG_MSG_BYTES: usize = 14;
         const MODES_SHORT_MSG_BYTES: usize = 7;
 
@@ -162,7 +162,8 @@ impl Frame {
             MODES_LONG_MSG_BYTES * 8
         };
 
-        let crc = crc::modes_checksum(rest.as_raw_slice(), bit_len)?;
+        let (_, remaining_bytes, _) = rest.domain().region().unwrap();
+        let crc = crc::modes_checksum(remaining_bytes, bit_len)?;
         Ok((rest, crc))
     }
 }
@@ -460,7 +461,7 @@ impl std::fmt::Display for Altitude {
 
 impl Altitude {
     /// `decodeAC12Field`
-    fn read(rest: &BitSlice<Msb0, u8>) -> Result<(&BitSlice<Msb0, u8>, u32), DekuError> {
+    fn read(rest: &BitSlice<u8, Msb0>) -> Result<(&BitSlice<u8, Msb0>, u32), DekuError> {
         let (rest, num) = u32::read(rest, (deku::ctx::Endian::Big, deku::ctx::Size::Bits(12)))?;
 
         let q = num & 0x10;
@@ -563,7 +564,7 @@ impl std::fmt::Display for Sign {
 pub struct IdentityCode(#[deku(reader = "Self::read(deku::rest)")] pub u16);
 
 impl IdentityCode {
-    fn read(rest: &BitSlice<Msb0, u8>) -> Result<(&BitSlice<Msb0, u8>, u16), DekuError> {
+    fn read(rest: &BitSlice<u8, Msb0>) -> Result<(&BitSlice<u8, Msb0>, u16), DekuError> {
         let (rest, num) = u32::read(rest, (deku::ctx::Endian::Big, deku::ctx::Size::Bits(13)))?;
 
         let c1 = (num & 0b1_0000_0000_0000) >> 12;
@@ -677,7 +678,7 @@ pub struct AC13Field(#[deku(reader = "Self::read(deku::rest)")] pub u32);
 
 impl AC13Field {
     // TODO Add unit
-    fn read(rest: &BitSlice<Msb0, u8>) -> Result<(&BitSlice<Msb0, u8>, u32), DekuError> {
+    fn read(rest: &BitSlice<u8, Msb0>) -> Result<(&BitSlice<u8, Msb0>, u32), DekuError> {
         let (rest, num) = u32::read(rest, (deku::ctx::Endian::Big, deku::ctx::Size::Bits(13)))?;
 
         let m_bit = num & 0x0040;
@@ -746,8 +747,8 @@ impl std::fmt::Display for Capability {
 const CHAR_LOOKUP: &[u8; 64] = b"#ABCDEFGHIJKLMNOPQRSTUVWXYZ##### ###############0123456789######";
 
 pub(crate) fn aircraft_identification_read(
-    rest: &BitSlice<Msb0, u8>,
-) -> Result<(&BitSlice<Msb0, u8>, String), DekuError> {
+    rest: &BitSlice<u8, Msb0>,
+) -> Result<(&BitSlice<u8, Msb0>, String), DekuError> {
     let mut inside_rest = rest;
 
     let mut chars = vec![];

@@ -1031,9 +1031,9 @@ pub struct AirborneVelocitySubFields {
 
 impl AirborneVelocitySubFields {
     fn read_v(
-        rest: &BitSlice<Msb0, u8>,
+        rest: &BitSlice<u8, Msb0>,
         t: AirborneVelocityType,
-    ) -> Result<(&BitSlice<Msb0, u8>, u16), DekuError> {
+    ) -> Result<(&BitSlice<u8, Msb0>, u16), DekuError> {
         match t {
             AirborneVelocityType::Subsonic => {
                 u16::read(rest, (deku::ctx::Endian::Big, deku::ctx::Size::Bits(10)))
